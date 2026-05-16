@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScreenShare - Transmissor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ScreenShare</h1>
+      <span class="role-badge">Transmissor</span>
+      <span id="connection-status" class="status status-disconnected">Desconectado</span>
+    </header>
+
+    <!-- Tela de criação de sala -->
+    <section id="create-room-screen" class="screen">
+      <h2>Compartilhar Tela</h2>
+      <p>Crie uma sala e compartilhe sua tela com outros usuários.</p>
+      <button id="btn-create-room" class="btn btn-primary">Criar Sala</button>
+    </section>
+
+    <!-- Tela da sala (após criar) -->
+    <section id="room-screen" class="screen hidden">
+
+      <!-- Card da sala -->
+      <div id="room-card" class="room-card hidden">
+        <h2>Sala</h2>
+        <div class="room-code-display">
+          <code id="room-code"></code>
+          <button id="btn-copy-code" class="btn btn-primary" title="Copiar código">Copiar</button>
+        </div>
+        <p class="room-hint">Compartilhe este código com os espectadores</p>
+      </div>
+
+      <div class="controls">
+        <button id="btn-start-stream" class="btn btn-success hidden">Iniciar Compartilhamento</button>
+        <button id="btn-stop-stream" class="btn btn-danger hidden">Encerrar Compartilhamento</button>
+      </div>
+
+      <!-- Lista de espectadores -->
+      <div id="viewers-panel" class="viewers-panel hidden">
+        <div class="viewers-header">
+          <h3>Espectadores (<span id="viewer-count">0</span>)</h3>
+        </div>
+        <ul id="viewers-list" class="viewers-list">
+          <!-- Itens inseridos via JS -->
+        </ul>
+        <p id="no-viewers-msg" class="no-viewers">Nenhum espectador na sala</p>
+      </div>
+
+      <div id="preview-container" class="preview-container hidden">
+        <h3>Pré-visualização</h3>
+        <video id="preview-video" autoplay muted playsinline></video>
+      </div>
+    </section>
+
+    <!-- Tela de transmissão encerrada -->
+    <section id="ended-screen" class="screen hidden">
+      <h2>Transmissão Encerrada</h2>
+      <p>O compartilhamento de tela foi finalizado.</p>
+      <button id="btn-new-room" class="btn btn-primary">Criar Nova Sala</button>
+    </section>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="broadcaster.js"></script>
+</body>
+</html>

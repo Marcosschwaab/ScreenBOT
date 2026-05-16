@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScreenBOT - AI Bot</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ScreenBOT</h1>
+      <span class="role-badge role-bot">AI Bot</span>
+      <span id="room-code-badge" class="room-code-badge hidden">Sala: <span id="room-code"></span></span>
+      <span id="connection-status" class="status status-disconnected">Desconectado</span>
+      <button id="btn-exit" class="btn btn-small btn-exit hidden">Sair</button>
+    </header>
+
+    <section id="join-screen" class="screen">
+      <h2>Entrar em uma Sala</h2>
+      <p>Configure a IA e insira o codigo da sala para analisar a tela compartilhada.</p>
+
+      <div class="ai-config">
+        <h3>Configuração da IA</h3>
+        <div class="control-group">
+          <label for="ai-provider">Provedor:</label>
+          <select id="ai-provider">
+            <option value="ollama">Ollama (Local)</option>
+            <option value="lmstudio">LM Studio (Local)</option>
+            <option value="openrouter">OpenRouter</option>
+            <option value="api">API Generica (OpenAI Compatible)</option>
+          </select>
+        </div>
+
+        <div class="ai-fields">
+          <div class="field-group">
+            <label for="ai-url">URL:</label>
+            <input type="text" id="ai-url" placeholder="http://localhost:11434" value="http://localhost:11434">
+          </div>
+          <div class="field-group">
+            <label for="ai-model">Modelo:</label>
+            <input type="text" id="ai-model" placeholder="qwen3.5:4b" value="qwen3.5:4b">
+          </div>
+          <div class="field-group hidden" id="api-key-group">
+            <label for="ai-apikey">API Key:</label>
+            <input type="password" id="ai-apikey" placeholder="sk-..." autocomplete="off">
+          </div>
+          <div class="field-group checkbox-group">
+            <label for="disable-thinking">
+              <input type="checkbox" id="disable-thinking">
+              Desativar thinking (respostas mais rapidas)
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="join-form">
+        <input type="text" id="room-code-input" placeholder="Codigo da sala" maxlength="8" autocomplete="off">
+        <button id="btn-join-room" class="btn btn-primary">Entrar</button>
+      </div>
+      <p id="join-error" class="error hidden"></p>
+    </section>
+
+    <section id="room-screen" class="screen hidden">
+      <div id="waiting-message" class="waiting-message">
+        <div class="spinner"></div>
+        <p>Aguardando o transmissor iniciar o compartilhamento...</p>
+      </div>
+
+      <div id="stream-container" class="stream-container hidden">
+        <video id="stream-video" autoplay playsinline muted></video>
+        <canvas id="capture-canvas" class="hidden"></canvas>
+      </div>
+
+      <div id="bot-panel" class="bot-panel hidden">
+        <div class="bot-controls">
+          <div class="control-group">
+            <label for="interval-select">Intervalo de analise:</label>
+            <select id="interval-select">
+              <option value="3000">3 segundos</option>
+              <option value="5000" selected>5 segundos</option>
+              <option value="10000">10 segundos</option>
+              <option value="30000">30 segundos</option>
+            </select>
+          </div>
+          <button id="btn-toggle-analysis" class="btn btn-success">Iniciar Analise</button>
+        </div>
+
+        <div class="bot-status">
+          <span id="analysis-status" class="analysis-status idle">Aguardando</span>
+          <span id="ai-provider-badge" class="ai-provider-badge"></span>
+          <span id="frame-count" class="frame-count">0 analises</span>
+        </div>
+
+        <div id="description-log" class="description-log">
+          <h3>Descricao da IA</h3>
+          <div id="log-entries" class="log-entries">
+            <p class="log-placeholder">As descricoes da IA aparecerao aqui...</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="ended-message" class="ended-message hidden">
+        <h3>Transmissao Encerrada</h3>
+        <p>O transmissor finalizou o compartilhamento de tela.</p>
+        <button id="btn-leave" class="btn btn-primary">Sair da Sala</button>
+      </div>
+    </section>
+
+    <section id="error-screen" class="screen hidden">
+      <h2>Transmissor Desconectado</h2>
+      <p>O transmissor saiu da sala. A transmissao foi encerrada.</p>
+      <button id="btn-back" class="btn btn-primary">Voltar</button>
+    </section>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="bot.js"></script>
+</body>
+</html>
