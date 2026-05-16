@@ -40,7 +40,8 @@ const state = {
   aiUrl: 'http://localhost:11434',
   aiModel: 'qwen3.5:4b',
   aiApiKey: '',
-  disableThinking: false
+  disableThinking: false,
+  aiTimeout: 60
 };
 
 const rtcConfig = {
@@ -84,7 +85,8 @@ const elements = {
   aiModel: document.getElementById('ai-model'),
   aiApiKey: document.getElementById('ai-apikey'),
   apiKeyGroup: document.getElementById('api-key-group'),
-  disableThinking: document.getElementById('disable-thinking')
+  disableThinking: document.getElementById('disable-thinking'),
+  aiTimeout: document.getElementById('ai-timeout')
 };
 
 function showScreen(screenName) {
@@ -359,7 +361,8 @@ async function analyzeFrameWithOllama(imageBase64) {
       apiKey: '',
       imageBase64,
       prompt: 'Descreva em portugues o que voce ve nesta tela. Seja conciso e objetivo, focando nos elementos principais visiveis.',
-      disableThinking: state.disableThinking
+      disableThinking: state.disableThinking,
+      timeout: state.aiTimeout * 1000
     })
   });
 
@@ -383,7 +386,8 @@ async function analyzeFrameWithOpenAICompatible(imageBase64) {
       apiKey: state.aiApiKey,
       imageBase64,
       prompt: 'Descreva em portugues o que voce ve nesta tela. Seja conciso e objetivo, focando nos elementos principais visiveis.',
-      disableThinking: state.disableThinking
+      disableThinking: state.disableThinking,
+      timeout: state.aiTimeout * 1000
     })
   });
 
@@ -507,6 +511,7 @@ function readAiConfig() {
   state.aiModel = elements.aiModel.value.trim();
   state.aiApiKey = elements.aiApiKey.value.trim();
   state.disableThinking = elements.disableThinking.checked;
+  state.aiTimeout = parseInt(elements.aiTimeout.value) || 60;
 
   if (!state.aiUrl) {
     throw new Error('URL da IA e obrigatoria');

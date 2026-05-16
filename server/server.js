@@ -38,9 +38,11 @@ async function fetchWithTimeout(url, options, timeout = AI_TIMEOUT) {
 }
 
 app.post('/api/ai/analyze', async (req, res) => {
-  const { provider, targetUrl, model, apiKey, imageBase64, prompt, disableThinking } = req.body;
+  const { provider, targetUrl, model, apiKey, imageBase64, prompt, disableThinking, timeout } = req.body;
 
-  console.log(`[AI Proxy] Recebida requisicao: provider=${provider}, url=${targetUrl}, model=${model}, disableThinking=${disableThinking}`);
+  const customTimeout = timeout || AI_TIMEOUT;
+
+  console.log(`[AI Proxy] Recebida requisicao: provider=${provider}, url=${targetUrl}, model=${model}, disableThinking=${disableThinking}, timeout=${customTimeout}ms`);
 
   if (!targetUrl || !model || !imageBase64) {
     console.error(`[AI Proxy] Parametros faltando`);
@@ -51,9 +53,9 @@ app.post('/api/ai/analyze', async (req, res) => {
     let result;
 
     if (provider === 'ollama') {
-      result = await proxyToOllama(targetUrl, model, imageBase64, prompt, disableThinking);
+      result = await proxyToOllama(targetUrl, model, imageBase64, prompt, disableThinking, customTimeout);
     } else {
-      result = await proxyToOpenAICompatible(targetUrl, model, apiKey, imageBase64, prompt, provider, disableThinking);
+      result = await proxyToOpenAICompatible(targetUrl, model, apiKey, imageBase64, prompt, provider, disableThinking, customTimeout);
     }
 
     console.log(`[AI Proxy] Sucesso`);
@@ -68,7 +70,7 @@ app.post('/api/ai/analyze', async (req, res) => {
   }
 });
 
-async function proxyToOllama(targetUrl, model, imageBase64, prompt, disableThinking) {
+async function proxyToOllama(targetUrl, model, imageBase64, prompt, disableThinking, timeout = AI_TIMEOUT) {
   const base64Data = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
   const fullUrl = `${targetUrl.replace(/\/+$/, '')}/api/generate`;
 
@@ -91,7 +93,7 @@ async function proxyToOllama(targetUrl, model, imageBase64, prompt, disableThink
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
-  });
+  }, timeout);
 
   const responseText = await response.text();
   console.log(`[AI Proxy] Ollama status: ${response.status}`);
@@ -114,7 +116,7 @@ async function proxyToOllama(targetUrl, model, imageBase64, prompt, disableThink
   return data.response;
 }
 
-async function proxyToOpenAICompatible(targetUrl, model, apiKey, imageBase64, prompt, provider, disableThinking) {
+async function proxyToOpenAICompatible(targetUrl, model, apiKey, imageBase64, prompt, provider, disableThinking, timeout = AI_TIMEOUT) {
   const headers = { 'Content-Type': 'application/json' };
 
   if (apiKey) {
@@ -143,7 +145,7 @@ async function proxyToOpenAICompatible(targetUrl, model, apiKey, imageBase64, pr
         ]
       }
     ],
-    max_tokens: 500
+    max_tokens: 4096
   };
 
   if (disableThinking) {
@@ -156,7 +158,7 @@ async function proxyToOpenAICompatible(targetUrl, model, apiKey, imageBase64, pr
     method: 'POST',
     headers,
     body: JSON.stringify(body)
-  });
+  }, timeout);
 
   const responseText = await response.text();
   console.log(`[AI Proxy] Status: ${response.status}`);
@@ -181,11 +183,16 @@ async function proxyToOpenAICompatible(targetUrl, model, apiKey, imageBase64, pr
   }
 
   const choice = data.choices[0];
-  if (!choice.message || !choice.message.content) {
-    throw new Error(`Resposta invalida da API: message.content ausente. Choice: ${JSON.stringify(choice).substring(0, 300)}`);
+  if (!choice.message) {
+    throw new Error(`Resposta invalida da API: message ausente. Choice: ${JSON.stringify(choice).substring(0, 300)}`);
   }
 
-  return choice.message.content;
+  const content = choice.message.content || choice.message.reasoning_content || '';
+  if (!content) {
+    throw new Error(`Resposta invalida da API: content e reasoning_content ausentes. Choice: ${JSON.stringify(choice).substring(0, 300)}`);
+  }
+
+  return content;
 }
 
 // Armazena o estado das salas: { roomId: { broadcasterId: string, viewers: Set<string>, isStreaming: boolean } }
